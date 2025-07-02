@@ -1,0 +1,61 @@
+{
+  "model_info": {
+    "name": "weather_prediction_lstm",
+    "version": "1.0.0",
+    "input_shape": [
+      1,
+      30,
+      6
+    ],
+    "output_shape": [
+      1,
+      4
+    ],
+    "features": [
+      "precipitation",
+      "avg_temp",
+      "max_temp",
+      "min_temp",
+      "day_sin",
+      "day_cos"
+    ],
+    "targets": [
+      "next_precipitation",
+      "next_avg_temp",
+      "next_max_temp",
+      "next_min_temp"
+    ]
+  },
+  "preprocessing": {
+    "lookback_days": 30,
+    "scale_values": [
+      0.005681818181818182,
+      0.04291845493562232,
+      0.03968253968253968,
+      0.04132231404958677,
+      0.5000046301747816,
+      0.5000092603924402
+    ],
+    "min_values": [
+      0.0,
+      -0.27038626609442057,
+      -0.45634920634920634,
+      0.10743801652892561,
+      0.5,
+      0.49999073960755985
+    ],
+    "feature_names": [
+      "prcp",
+      "tavg",
+      "tmax",
+      "tmin",
+      "day_of_year_sin",
+      "day_of_year_cos"
+    ]
+  },
+  "performance": {
+    "training_loss": 0.016495654359459877,
+    "validation_loss": 0.018308835104107857,
+    "model_size_kb": 52.75
+  }
+}

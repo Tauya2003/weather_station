@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Alert Settings - Edge Weather Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            padding: 20px 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+        
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            z-index: -1;
+        }
+        
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: none;
+        }
+        
+        .header-title {
+            color: #2c3e50;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+        
+        .icon-settings {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .threshold-input {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .threshold-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .alert-preview {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .btn-save {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Background -->
+    <video autoplay muted loop class="video-background">
+        <source src="/static/bg.mp4" type="video/mp4">
+    </video>
+    <div class="video-overlay"></div>
+    
+    <div class="container">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="header-title display-5">
+                        <i class="bi bi-gear icon-settings"></i>
+                        Weather Alert Settings
+                    </h1>
+                    <p class="lead text-muted">Configure thresholds for weather notifications and warnings</p>
+                </div>
+                <a href="/" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Back to Dashboard
+                </a>
+            </div>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                            <i class="bi bi-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <div class="row">
+                    <!-- Temperature Alerts -->
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="settings-card">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-thermometer-half me-3" style="font-size: 1.5rem; color: #667eea;"></i>
+                                <h3 class="h4 mb-0">Temperature Alerts</h3>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="freeze_warning" class="form-label">
+                                    <i class="bi bi-snow text-primary me-2"></i>
+                                    Freeze Warning (°C)
+                                </label>
+                                <input type="number" step="0.1" class="form-control threshold-input" 
+                                       id="freeze_warning" name="freeze_warning" 
+                                       value="{{ thresholds.freeze_warning }}" required>
+                                <div class="alert-preview">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Alert when temperature ≤ this value
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="frost_warning" class="form-label">
+                                    <i class="bi bi-thermometer-low text-info me-2"></i>
+                                    Frost Warning (°C)
+                                </label>
+                                <input type="number" step="0.1" class="form-control threshold-input" 
+                                       id="frost_warning" name="frost_warning" 
+                                       value="{{ thresholds.frost_warning }}" required>
+                                <div class="alert-preview">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Alert when temperature ≤ this value
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="heat_warning" class="form-label">
+                                    <i class="bi bi-sun text-warning me-2"></i>
+                                    Heat Warning (°C)
+                                </label>
+                                <input type="number" step="0.1" class="form-control threshold-input" 
+                                       id="heat_warning" name="heat_warning" 
+                                       value="{{ thresholds.heat_warning }}" required>
+                                <div class="alert-preview">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Alert when temperature ≥ this value
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="extreme_heat" class="form-label">
+                                    <i class="bi bi-thermometer-high text-danger me-2"></i>
+                                    Extreme Heat Warning (°C)
+                                </label>
+                                <input type="number" step="0.1" class="form-control threshold-input" 
+                                       id="extreme_heat" name="extreme_heat" 
+                                       value="{{ thresholds.extreme_heat }}" required>
+                                <div class="alert-preview">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Alert when temperature ≥ this value
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Humidity Alerts -->
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="settings-card">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-droplet me-3" style="font-size: 1.5rem; color: #667eea;"></i>
+                                <h3 class="h4 mb-0">Humidity Alerts</h3>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="low_humidity" class="form-label">
+                                    <i class="bi bi-droplet text-warning me-2"></i>
+                                    Low Humidity Warning (%)
+                                </label>
+                                <input type="number" step="0.1" class="form-control threshold-input" 
+                                       id="low_humidity" name="low_humidity" 
+                                       value="{{ thresholds.low_humidity }}" required>
+                                <div class="alert-preview">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Alert when humidity ≤ this value
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="high_humidity" class="form-label">
+                                    <i class="bi bi-moisture text-info me-2"></i>
+                                    High Humidity Warning (%)
+                                </label>
+                                <input type="number" step="0.1" class="form-control threshold-input" 
+                                       id="high_humidity" name="high_humidity" 
+                                       value="{{ thresholds.high_humidity }}" required>
+                                <div class="alert-preview">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Alert when humidity ≥ this value
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Preview Section -->
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <h5 class="mb-3">
+                                    <i class="bi bi-eye me-2"></i>
+                                    Alert Preview
+                                </h5>
+                                <div class="alert alert-warning d-flex align-items-center">
+                                    <i class="bi bi-thermometer-low me-2"></i>
+                                    <div>
+                                        <strong>Frost Warning</strong><br>
+                                        <small>Temperature is 1.5°C - Risk of frost!</small>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="bi bi-droplet me-2"></i>
+                                    <div>
+                                        <strong>Low Humidity Alert</strong><br>
+                                        <small>Humidity is 28% - Very dry conditions!</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Save Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-save btn-lg">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Save Alert Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Add form validation feedback
+        document.querySelector('form').addEventListener('submit', function() {
+            const submitBtn = this.querySelector('.btn-save');
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+            submitBtn.disabled = true;
+        });
+        
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                if (alert.querySelector('.btn-close')) {
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

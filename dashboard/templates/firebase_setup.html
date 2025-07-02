@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firebase Backup Setup - Weather Dashboard</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        color: #333;
+        margin: 0;
+        font-size: 2.5em;
+      }
+
+      .status-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .status-enabled {
+        border-left: 5px solid #28a745;
+      }
+
+      .status-disabled {
+        border-left: 5px solid #dc3545;
+      }
+
+      .status-warning {
+        border-left: 5px solid #ffc107;
+      }
+
+      .setup-section {
+        margin-bottom: 30px;
+      }
+
+      .setup-section h3 {
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 10px;
+      }
+
+      .button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .button:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+      }
+
+      .button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .button-success {
+        background: #28a745;
+      }
+
+      .button-success:hover {
+        background: #218838;
+      }
+
+      .button-danger {
+        background: #dc3545;
+      }
+
+      .button-danger:hover {
+        background: #c82333;
+      }
+
+      .button-warning {
+        background: #ffc107;
+        color: #212529;
+      }
+
+      .button-warning:hover {
+        background: #e0a800;
+      }
+
+      .code-block {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        padding: 15px;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+        overflow-x: auto;
+        margin: 10px 0;
+      }
+
+      .steps {
+        counter-reset: step-counter;
+      }
+
+      .step {
+        counter-increment: step-counter;
+        margin-bottom: 20px;
+        padding-left: 40px;
+        position: relative;
+      }
+
+      .step::before {
+        content: counter(step-counter);
+        position: absolute;
+        left: 0;
+        top: 0;
+        background: #667eea;
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+      }
+
+      .alert-info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+      }
+
+      .alert-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+      }
+
+      .alert-success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #495057;
+      }
+
+      .form-group input[type="number"] {
+        width: 100px;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+      }
+
+      .back-link {
+        display: inline-block;
+        color: #667eea;
+        text-decoration: none;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/" class="back-link">← Back to Dashboard</a>
+
+      <div class="header">
+        <h1>🔄 Firebase Backup Setup</h1>
+        <p>Configure automatic cloud backup for your weather data</p>
+      </div>
+
+      <!-- Status Card -->
+      <div
+        class="status-card {% if firebase_status.enabled %}status-enabled{% else %}status-disabled{% endif %}"
+      >
+        <h3>📊 Backup Status</h3>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+          "
+        >
+          <div>
+            <strong>Status:</strong>
+            <span
+              style="color: {% if firebase_status.enabled %}#28a745{% else %}#dc3545{% endif %};"
+            >
+              {% if firebase_status.enabled %}✅ Enabled{% else %}❌ Disabled{%
+              endif %}
+            </span>
+          </div>
+          <div>
+            <strong>Auto Backup:</strong>
+            <span
+              style="color: {% if firebase_status.automatic_running %}#28a745{% else %}#6c757d{% endif %};"
+            >
+              {% if firebase_status.automatic_running %}🔄 Running{% else %}⏸️
+              Stopped{% endif %}
+            </span>
+          </div>
+          <div>
+            <strong>Local Records:</strong> {{
+            firebase_status.get('local_records', 'N/A') }}
+          </div>
+          <div>
+            <strong>Firebase Records:</strong> {{
+            firebase_status.get('firebase_records', 'N/A') }}
+          </div>
+        </div>
+
+        {% if firebase_status.get('sync_status') %}
+        <div style="margin-top: 10px">
+          <strong>Sync Status:</strong>
+          <span
+            style="color: {% if firebase_status.sync_status == 'synced' %}#28a745{% else %}#ffc107{% endif %};"
+          >
+            {{ firebase_status.sync_status.replace('_', ' ').title() }}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Setup Instructions -->
+      {% if not firebase_status.enabled %}
+      <div class="setup-section">
+        <h3>🚀 Firebase Setup Instructions</h3>
+        <div class="alert alert-info">
+          <strong>📝 Before you begin:</strong> You'll need a Google Firebase
+          account and a new project set up.
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <h4>Create Firebase Project</h4>
+            <p>
+              Go to
+              <a href="https://console.firebase.google.com/" target="_blank"
+                >Firebase Console</a
+              >
+              and create a new project.
+            </p>
+          </div>
+
+          <div class="step">
+            <h4>Enable Firestore Database</h4>
+            <p>
+              In your Firebase project, enable Cloud Firestore in test mode.
+            </p>
+          </div>
+
+          <div class="step">
+            <h4>Create Service Account</h4>
+            <p>
+              Go to Project Settings → Service Accounts → Generate new private
+              key
+            </p>
+          </div>
+
+          <div class="step">
+            <h4>Download Configuration</h4>
+            <p>
+              Download the JSON file and save it as
+              <code>firebase_config.json</code> in your weather-dashboard
+              folder:
+            </p>
+            <div class="code-block">{{ firebase_config_path }}</div>
+          </div>
+
+          <div class="step">
+            <h4>Restart Application</h4>
+            <p>
+              Restart the weather dashboard to load the Firebase configuration.
+            </p>
+          </div>
+        </div>
+
+        <div class="alert alert-warning">
+          <strong>⚠️ Security Note:</strong> Keep your firebase_config.json file
+          secure and never commit it to version control.
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Management Controls -->
+      {% if firebase_status.enabled %}
+      <div class="setup-section">
+        <h3>📋 Backup Management</h3>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+          "
+        >
+          <!-- Manual Backup -->
+          <div>
+            <h4>Manual Backup</h4>
+            <button class="button button-success" onclick="triggerFullBackup()">
+              🗄️ Full Backup
+            </button>
+            <button
+              class="button button-success"
+              onclick="triggerIncrementalBackup()"
+            >
+              ⚡ Incremental Backup
+            </button>
+            <p>
+              <small
+                >Full backup uploads all data. Incremental backup uploads only
+                recent data.</small
+              >
+            </p>
+          </div>
+
+          <!-- Automatic Backup -->
+          <div>
+            <h4>Automatic Backup</h4>
+            <div class="form-group">
+              <label for="backup-interval">Backup Interval (minutes):</label>
+              <input
+                type="number"
+                id="backup-interval"
+                value="60"
+                min="15"
+                max="1440"
+              />
+            </div>
+            <button class="button button-warning" onclick="startAutoBackup()">
+              ⏰ Start Auto Backup
+            </button>
+            <button class="button button-danger" onclick="stopAutoBackup()">
+              ⏹️ Stop Auto Backup
+            </button>
+          </div>
+
+          <!-- Data Restore -->
+          <div>
+            <h4>Data Restore</h4>
+            <button
+              class="button button-warning"
+              onclick="restoreFromFirebase()"
+            >
+              📥 Restore from Firebase
+            </button>
+            <p>
+              <small
+                >⚠️ This will restore data from Firebase to your local
+                database.</small
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Status Messages -->
+      <div id="status-messages"></div>
+    </div>
+
+    <script>
+      function showMessage(message, type = "info") {
+        const messagesDiv = document.getElementById("status-messages");
+        const alertDiv = document.createElement("div");
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerHTML = message;
+        messagesDiv.appendChild(alertDiv);
+
+        // Remove message after 5 seconds
+        setTimeout(() => {
+          alertDiv.remove();
+        }, 5000);
+      }
+
+      async function apiCall(url, method = "POST", data = null) {
+        try {
+          const options = {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          };
+
+          if (data) {
+            options.body = JSON.stringify(data);
+          }
+
+          const response = await fetch(url, options);
+          const result = await response.json();
+
+          if (response.ok) {
+            showMessage(
+              result.message || "Operation completed successfully",
+              "success"
+            );
+          } else {
+            showMessage(result.error || "Operation failed", "warning");
+          }
+
+          // Refresh page after successful operations
+          if (response.ok) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        } catch (error) {
+          showMessage(`Error: ${error.message}`, "warning");
+        }
+      }
+
+      function triggerFullBackup() {
+        apiCall("/api/firebase/backup/full");
+      }
+
+      function triggerIncrementalBackup() {
+        const hours = prompt("How many hours back to backup?", "24");
+        if (hours) {
+          apiCall("/api/firebase/backup/incremental", "POST", {
+            hours: parseInt(hours),
+          });
+        }
+      }
+
+      function startAutoBackup() {
+        const interval = document.getElementById("backup-interval").value;
+        apiCall("/api/firebase/backup/auto/start", "POST", {
+          interval_minutes: parseInt(interval),
+        });
+      }
+
+      function stopAutoBackup() {
+        apiCall("/api/firebase/backup/auto/stop");
+      }
+
+      function restoreFromFirebase() {
+        if (
+          confirm(
+            "Are you sure you want to restore data from Firebase? This may overwrite local data."
+          )
+        ) {
+          apiCall("/api/firebase/restore");
+        }
+      }
+
+      // Auto-refresh status every 30 seconds
+      setInterval(() => {
+        fetch("/api/firebase/status")
+          .then((response) => response.json())
+          .then((data) => {
+            // Update status display without full page reload
+            console.log("Firebase status updated:", data);
+          })
+          .catch((error) => console.error("Error updating status:", error));
+      }, 30000);
+    </script>
+  </body>
+</html>
